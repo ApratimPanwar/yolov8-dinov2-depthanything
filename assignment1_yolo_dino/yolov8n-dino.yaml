@@ -1,0 +1,53 @@
+# YOLOv8 + DINOv2 -- global semantic context injected at P5.
+# Based on ultralytics/cfg/models/v8/yolov8.yaml.
+#
+# Inserting ConvDummy at index 0 shifts every backbone layer by +1, so ALL head
+# indices below are re-numbered from the stock config. The page only publishes the
+# backbone; getting the head wrong is a silent shape error at Detect().
+
+# Parameters
+nc: 80
+scales: # [depth, width, max_channels]
+  n: [0.33, 0.25, 1024]
+  s: [0.33, 0.50, 1024]
+  m: [0.67, 0.75, 768]
+  l: [1.00, 1.00, 512]
+  x: [1.00, 1.25, 512]
+
+backbone:
+  # [from, repeats, module, args]
+  - [-1, 1, ConvDummy, []] # 0: raw image tap (identity), so layer 11 can read the untouched input
+  - [-1, 1, Conv, [64, 3, 2]] # 1-P1/2
+  - [-1, 1, Conv, [128, 3, 2]] # 2-P2/4
+  - [-1, 3, C2f, [128, True]] # 3
+  - [-1, 1, Conv, [256, 3, 2]] # 4-P3/8
+  - [-1, 6, C2f, [256, True]] # 5  <- P3 feature
+  - [-1, 1, Conv, [512, 3, 2]] # 6-P4/16
+  - [-1, 6, C2f, [512, True]] # 7  <- P4 feature
+  - [-1, 1, Conv, [1024, 3, 2]] # 8-P5/32
+  - [-1, 3, C2f, [1024, True]] # 9
+  - [-1, 1, SPPF, [1024, 5]] # 10 <- spatial P5
+
+  # Fusion
+  - [0, 1, DINOv2, [1024]] # 11: raw image -> frozen DINOv2 -> global context @ P5 grid
+  - [[-1, 10], 1, Concat, [1]] # 12: global context + spatial P5
+
+head:
+  - [-1, 1, Conv, [1024, 1, 1, None, 1, 1, False]] # 13: squeeze fused 2x width back to P5 width (act=False so an identity init is an exact passthrough)
+  - [-1, 1, nn.Upsample, [None, 2, "nearest"]] # 14
+  - [[-1, 7], 1, Concat, [1]] # 15 cat backbone P4
+  - [-1, 3, C2f, [512]] # 16
+
+  - [-1, 1, nn.Upsample, [None, 2, "nearest"]] # 17
+  - [[-1, 5], 1, Concat, [1]] # 18 cat backbone P3
+  - [-1, 3, C2f, [256]] # 19 (P3/8-small)
+
+  - [-1, 1, Conv, [256, 3, 2]] # 20
+  - [[-1, 16], 1, Concat, [1]] # 21 cat head P4
+  - [-1, 3, C2f, [512]] # 22 (P4/16-medium)
+
+  - [-1, 1, Conv, [512, 3, 2]] # 23
+  - [[-1, 13], 1, Concat, [1]] # 24 cat head P5
+  - [-1, 3, C2f, [1024]] # 25 (P5/32-large)
+
+  - [[19, 22, 25], 1, Detect, [nc]] # 26 Detect(P3, P4, P5)

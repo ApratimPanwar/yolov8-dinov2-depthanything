@@ -1,0 +1,36 @@
+{
+  "config": {
+    "data": "construction-ppe.yaml",
+    "epochs": 50,
+    "imgsz": 640,
+    "batch": 8,
+    "device": "0",
+    "seed": 0,
+    "workers": 4,
+    "weights": "yolov8n.pt"
+  },
+  "results": [
+    {
+      "arm": "ab_stock",
+      "mAP50": 0.561,
+      "mAP50-95": 0.2808,
+      "precision": 0.5716,
+      "recall": 0.5326,
+      "background_FP": 228.0,
+      "missed_FN": 327.0,
+      "params": 3007793,
+      "trainable": 0
+    },
+    {
+      "arm": "ab_fused_dino",
+      "mAP50": 0.5692,
+      "mAP50-95": 0.2823,
+      "precision": 0.5504,
+      "recall": 0.5589,
+      "background_FP": 219.0,
+      "missed_FN": 304.0,
+      "params": 25294257,
+      "trainable": 0
+    }
+  ]
+}

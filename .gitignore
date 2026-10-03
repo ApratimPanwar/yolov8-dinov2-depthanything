@@ -1,0 +1,27 @@
+# Python environment (multi-GB, recreate via README setup steps)
+.venv/
+
+# Patched Ultralytics clone -- recreate with:
+#   git clone https://github.com/ultralytics/ultralytics.git ultralytics_repo
+#   pip install -e ./ultralytics_repo
+#   python assignment1_yolo_dino/patch_ultralytics.py --repo ultralytics_repo
+ultralytics_repo/
+
+# Datasets are downloaded on demand by Ultralytics
+datasets/
+
+# Downloaded model weights
+*.pt
+
+# Scratch
+__pycache__/
+*.pyc
+bus.jpg
+_diag/
+
+# Stray Ultralytics output dir
+runs/
+
+# Trained checkpoint (48.8 MB; ~22 MB of it is the re-downloadable frozen DINOv2 trunk).
+# Reproduce with the train_dino.py command in the README.
+assignment1_yolo_dino/outputs/**/weights/
